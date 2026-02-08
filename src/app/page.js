@@ -1,21 +1,24 @@
 "use client";
 import { useState } from "react";
-import PlayerControls from "./components/PlayerControls"; 
+import PlayerControls from "./components/PlayerControls";
+import UploadButton from "./components/UploadButton";
 
 export default function Home() {
-  // State lifted for background interaction
   const [isPlaying, setIsPlaying] = useState(false);
 
-  // Background double-click toggle
   const handleDoubleClick = () => {
     setIsPlaying(!isPlaying);
   };
 
   return (
-    <div 
-      className="flex flex-col h-full justify-between select-none" 
-      onDoubleClick={handleDoubleClick} 
+    <div
+      className="flex flex-col h-full justify-between select-none"
+      onDoubleClick={handleDoubleClick}
     >
+      {/* Top Right Action */}
+      <div className="flex justify-end p-4">
+        <UploadButton />
+      </div>
       {/* Hero Section */}
       <div className="flex justify-center items-center h-full gap-8 pointer-events-none">
         <svg
@@ -59,10 +62,10 @@ export default function Home() {
       </div>
 
       {/* Player Wrapper */}
-      <div onDoubleClick={(e) => e.stopPropagation()}> 
-        <PlayerControls 
-          isPlaying={isPlaying} 
-          setIsPlaying={setIsPlaying} 
+      <div onDoubleClick={(e) => e.stopPropagation()}>
+        <PlayerControls
+          isPlaying={isPlaying}
+          setIsPlaying={setIsPlaying}
         />
       </div>
     </div>
