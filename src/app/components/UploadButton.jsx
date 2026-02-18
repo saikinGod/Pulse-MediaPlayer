@@ -1,53 +1,83 @@
 "use client";
-import Link from "next/link";
-import { Upload } from "lucide-react";
+import { useRef, useState } from "react";
+import { Upload, Loader2 } from "lucide-react";
+import { saveData } from "../logic/saveData";
+import { toast } from "react-toastify";
 
-export default function UploadButton() {
+export default function UploadButton({ type }) {
+  const fileInputRef = useRef(null);
+  const [isUploading, setIsUploading] = useState(false);
+
+  // Get Audio/Video Duration
+  const getDuration = (file) => {
+    return new Promise((resolve) => {
+      const element = type === "video" ? document.createElement("video") : document.createElement("audio");
+      element.preload = "metadata";
+      element.onloadedmetadata = () => {
+        window.URL.revokeObjectURL(element.src);
+        const totalSeconds = Math.floor(element.duration);
+        const minutes = Math.floor(totalSeconds / 60);
+        const seconds = totalSeconds % 60;
+        resolve(`${minutes}:${seconds.toString().padStart(2, "0")}`);
+      };
+      element.src = URL.createObjectURL(file);
+    });
+  };
+
+  const handleFileChange = async (e) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+
+    setIsUploading(true);
+
+    for (const file of files) {
+      // Calculate Duration properly
+      let duration = "0:00";
+      try {
+        duration = await getDuration(file);
+      } catch (err) {
+        console.error("Duration error", err);
+      }
+
+      // Prepare Data Object manually
+      const dataObj = {
+        id: Date.now() + Math.random(), // Unique ID
+        name: file.name,
+        size: (file.size / (1024 * 1024)).toFixed(2) + " MB",
+        date: new Date().toLocaleDateString(),
+        duration: duration,
+        fileType: type === "video" ? "video" : "audio",
+
+      };
+
+
+      saveData({ type: type, data: dataObj });
+    }
+
+    setIsUploading(false);
+    if (fileInputRef.current) fileInputRef.current.value = "";
+    window.dispatchEvent(new Event("storage"));
+  };
+
   return (
-    <Link
-      href="/upload"
-      className="group relative flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold overflow-hidden transition-all duration-300 hover:scale-105 active:scale-95"
-    >
-      {/* Animated gradient background */}
-      <div
-        className="absolute inset-0 bg-linear-to-r from-red-600 via-red-500 to-red-600 opacity-100 group-hover:opacity-0 transition-opacity duration-300"
-        style={{
-          backgroundSize: "200% 100%",
-          animation: "shimmer 3s ease-in-out infinite",
-        }}
+    <>
+      <input
+        type="file"
+        ref={fileInputRef}
+        onChange={handleFileChange}
+        className="hidden"
+        accept={type === "video" ? "video/*" : "audio/*"}
+        multiple
       />
 
-      {/* Hover state gradient */}
-      <div className="absolute inset-0 bg-linear-to-r from-red-700 via-red-600 to-red-700 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-
-      {/* Glow effect */}
-      <div
-        className="absolute inset-0 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"
-        style={{
-          boxShadow:
-            "0 0 20px rgba(239, 68, 68, 0.6), 0 0 40px rgba(239, 68, 68, 0.3)",
-        }}
-      />
-
-      {/* Content */}
-      <Upload
-        size={18}
-        className="relative z-10 text-white transition-transform duration-300 group-hover:rotate-12"
-      />
-      <span className="relative z-10 text-white">Upload</span>
-
-      {/* CSS for shimmer animation */}
-      <style jsx>{`
-        @keyframes shimmer {
-          0%,
-          100% {
-            background-position: 0% 50%;
-          }
-          50% {
-            background-position: 100% 50%;
-          }
-        }
-      `}</style>
-    </Link>
+      <button
+        onClick={() => fileInputRef.current?.click()}
+        disabled={isUploading}
+        className="flex items-center gap-2 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg font-medium transition-all shadow-lg shadow-red-900/20 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+      >
+        {isUploading ? <Loader2 size={18} className="animate-spin" /> : <Upload size={18} />}
+        {isUploading ? "Processing..." : "Upload"}
+      </button>
+    </>
   );
 }

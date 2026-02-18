@@ -15,10 +15,7 @@ export default function Home() {
       className="flex flex-col h-full justify-between select-none"
       onDoubleClick={handleDoubleClick}
     >
-      {/* Top Right Action */}
-      <div className="flex justify-end p-4">
-        <UploadButton />
-      </div>
+
       {/* Hero Section */}
       <div className="flex justify-center items-center h-full gap-8 pointer-events-none">
         <svg

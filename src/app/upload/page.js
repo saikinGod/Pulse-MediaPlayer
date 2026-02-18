@@ -1,10 +1,36 @@
 "use client";
-import { useState } from "react";
-import { Upload, Link as LinkIcon, Sparkles, Music, Video, FileAudio, FileVideo, Zap } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Upload, Link as LinkIcon, Sparkles, Music, Video, FileAudio, FileVideo, Zap, Trash2, File } from "lucide-react";
 
 export default function UserUpload() {
     const [dragActive, setDragActive] = useState(false);
     const [urlInput, setUrlInput] = useState("");
+    const [uploads, setUploads] = useState([]);
+
+    // Load data from Local Storage on component mount
+    useEffect(() => {
+        const savedData = localStorage.getItem("pulse_media_uploads");
+        if (savedData) {
+            setUploads(JSON.parse(savedData));
+        }
+    }, []);
+
+    // Save to Local Storage
+    const saveToLocalStorage = (newItems) => {
+        const updatedList = [...newItems, ...uploads];
+        const slicedList = updatedList.slice(0, 20);
+        setUploads(slicedList);
+        localStorage.setItem("pulse_media_uploads", JSON.stringify(slicedList));
+    };
+
+    // Helper to format file size
+    const formatSize = (bytes) => {
+        if (bytes === 0) return '0 Bytes';
+        const k = 1024;
+        const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    };
 
     const handleDrag = (e) => {
         e.preventDefault();
@@ -21,22 +47,53 @@ export default function UserUpload() {
         e.stopPropagation();
         setDragActive(false);
 
-        if (e.dataTransfer.files && e.dataTransfer.files[0]) {
-            console.log("Files dropped:", e.dataTransfer.files);
+        if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+            const newFiles = Array.from(e.dataTransfer.files).map(file => ({
+                id: Date.now() + Math.random(),
+                type: 'file',
+                name: file.name,
+                size: formatSize(file.size),
+                date: new Date().toLocaleDateString(),
+                fileType: file.type.startsWith('audio') ? 'audio' : 'video'
+            }));
+            saveToLocalStorage(newFiles);
         }
     };
 
     const handleFileInput = (e) => {
-        if (e.target.files && e.target.files[0]) {
-            console.log("Files selected:", e.target.files);
+        if (e.target.files && e.target.files.length > 0) {
+            const newFiles = Array.from(e.target.files).map(file => ({
+                id: Date.now() + Math.random(),
+                type: 'file',
+                name: file.name,
+                size: formatSize(file.size),
+                date: new Date().toLocaleDateString(),
+                fileType: file.type.startsWith('audio') ? 'audio' : 'video'
+            }));
+            saveToLocalStorage(newFiles);
         }
     };
 
     const handleAddURL = () => {
         if (urlInput.trim()) {
-            console.log("URL added:", urlInput);
+            const newItem = {
+                id: Date.now(),
+                type: 'url',
+                name: urlInput,
+                size: 'Link',
+                date: new Date().toLocaleDateString(),
+                fileType: 'link'
+            };
+            saveToLocalStorage([newItem]);
             setUrlInput("");
         }
+    };
+
+    // Delete item from Local Storage
+    const deleteItem = (id) => {
+        const filtered = uploads.filter(item => item.id !== id);
+        setUploads(filtered);
+        localStorage.setItem("pulse_media_uploads", JSON.stringify(filtered));
     };
 
     return (
@@ -72,7 +129,7 @@ export default function UserUpload() {
             {/* Hero Section */}
             <div className="relative flex-1 flex flex-col items-center justify-center px-6 py-12">
 
-                {/* Welcome Badge with Glow */}
+                {/* Welcome Badge */}
                 <div className="mb-8 px-5 py-2.5 rounded-full border flex items-center gap-2.5 relative group"
                     style={{
                         borderColor: "rgba(233,69,96,0.4)",
@@ -86,7 +143,6 @@ export default function UserUpload() {
                     <Zap size={14} className="text-red-400" />
                 </div>
 
-                {/* Main Heading with Gradient */}
                 <h1 className="text-5xl md:text-6xl lg:text-7xl font-black text-center mb-6 max-w-5xl leading-tight">
                     <span className="block bg-linear-to-b from-white to-gray-400 bg-clip-text text-transparent">
                         Your Futuristic
@@ -96,13 +152,12 @@ export default function UserUpload() {
                     </span>
                 </h1>
 
-                {/* Subtitle with Better Typography */}
                 <p className="text-lg md:text-xl text-gray-400 text-center max-w-3xl mb-16 leading-relaxed">
                     Upload, organize, and play your media with cutting-edge style.<br />
                     <span className="text-red-400 font-medium">Experience the pulse of modern entertainment.</span>
                 </p>
 
-                {/* Upload Section with Enhanced Glassmorphism */}
+                {/* Upload Section */}
                 <div className="w-full max-w-5xl rounded-3xl p-8 md:p-12 relative"
                     style={{
                         background: "rgba(18,18,26,0.7)",
@@ -111,14 +166,12 @@ export default function UserUpload() {
                         boxShadow: "0 8px 32px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.05)"
                     }}>
 
-                    {/* Accent Line with Glow */}
                     <div className="absolute top-0 left-1/2 transform -translate-x-1/2 w-32 h-1 rounded-full"
                         style={{
                             background: "linear-gradient(90deg, transparent, #dc2626, transparent)",
                             boxShadow: "0 0 20px #dc2626"
                         }} />
 
-                    {/* Section Title */}
                     <div className="flex items-center gap-3 mb-8">
                         <div className="w-1.5 h-10 rounded-full relative ">
                             <div className="absolute inset-0 bg-linear-to-b from-red-500 to-purple-500 animate-gradient" />
@@ -128,7 +181,7 @@ export default function UserUpload() {
                         </h2>
                     </div>
 
-                    {/* Drag & Drop Zone with Enhanced Effects */}
+                    {/* Drag & Drop Zone */}
                     <div
                         onDragEnter={handleDrag}
                         onDragLeave={handleDrag}
@@ -146,7 +199,6 @@ export default function UserUpload() {
                         }}
                         onClick={() => document.getElementById('file-input').click()}
                     >
-                        {/* Animated Border Effect */}
                         <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500">
                             <div className="absolute inset-0 rounded-2xl"
                                 style={{
@@ -165,7 +217,6 @@ export default function UserUpload() {
                             className="hidden"
                         />
 
-                        {/* Upload Icon with 3D Effect */}
                         <div className="mb-8 relative">
                             <div
                                 className="absolute inset-0 rounded-full blur-2xl transition-all duration-500"
@@ -180,7 +231,6 @@ export default function UserUpload() {
                             </div>
                         </div>
 
-                        {/* Text with Better Hierarchy */}
                         <p className="text-2xl font-bold text-white mb-3 tracking-tight">Drop your media files here</p>
                         <p className="text-base text-gray-400 mb-2">
                             or <span className="text-red-400 font-medium underline decoration-red-400/30">click to browse</span>
@@ -188,19 +238,9 @@ export default function UserUpload() {
                         <p className="text-sm text-gray-500">
                             MP3 • MP4 • WAV • OGG • WebM
                         </p>
-
-                        {/* Upload Stats */}
-                        <div className="mt-6 flex items-center gap-6 text-xs">
-                            <div className="flex items-center gap-2">
-                                <div className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
-                                <span className="text-gray-500">Ready to upload</span>
-                            </div>
-                            <div className="w-px h-3 bg-gray-700" />
-                            <span className="text-gray-500">Max 500MB per file</span>
-                        </div>
                     </div>
 
-                    {/* URL Input Section with Modern Design */}
+                    {/* URL Input */}
                     <div className="flex flex-col md:flex-row gap-4">
                         <div className="flex-1 relative group">
                             <div className="absolute -inset-0.5 bg-linear-to-r from-red-500 to-purple-500 rounded-xl opacity-0 group-hover:opacity-20 blur transition duration-500" />
@@ -232,7 +272,7 @@ export default function UserUpload() {
                         </div>
                         <button
                             onClick={handleAddURL}
-                            className="relative px-10 py-4 rounded-xl font-bold text-white transition-all duration-300 hover:scale-105 active:scale-95  group"
+                            className="relative px-10 py-4 rounded-xl font-bold text-white transition-all duration-300 hover:scale-105 active:scale-95 group"
                             style={{
                                 background: "linear-gradient(135deg, #dc2626, #991b1b)",
                                 boxShadow: "0 4px 24px rgba(233,69,96,0.4), inset 0 1px 0 rgba(255,255,255,0.2)"
@@ -243,15 +283,47 @@ export default function UserUpload() {
                             <span className="relative">Add URL</span>
                         </button>
                     </div>
+
+                    {/* Recent Activity List (Local Storage) */}
+                    {uploads.length > 0 && (
+                        <div className="mt-12 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                            <div className="flex items-center gap-2 mb-4">
+                                <h3 className="text-lg font-semibold text-gray-200">Recent Uploads</h3>
+                                <span className="text-xs text-gray-500 px-2 py-0.5 rounded-full bg-gray-800 border border-gray-700">Stored Locally</span>
+                            </div>
+
+                            <div className="space-y-3">
+                                {uploads.map((item) => (
+                                    <div key={item.id} className="group flex items-center justify-between p-4 rounded-xl bg-[#1a1a24] border border-[#2a2a35] hover:border-red-500/30 transition-all duration-300">
+                                        <div className="flex items-center gap-4 overflow-hidden">
+                                            <div className="p-2.5 rounded-lg bg-[#2a2a35] text-red-400 group-hover:text-white group-hover:bg-red-500 transition-colors">
+                                                {item.type === 'url' ? <LinkIcon size={20} /> : (item.fileType === 'audio' ? <Music size={20} /> : <Video size={20} />)}
+                                            </div>
+                                            <div className="flex flex-col overflow-hidden">
+                                                <span className="text-sm font-medium text-gray-200 truncate">{item.name}</span>
+                                                <span className="text-xs text-gray-500">{item.size} • {item.date}</span>
+                                            </div>
+                                        </div>
+                                        <button
+                                            onClick={() => deleteItem(item.id)}
+                                            className="p-2 rounded-lg text-gray-500 hover:text-red-400 hover:bg-red-400/10 transition-colors"
+                                        >
+                                            <Trash2 size={18} />
+                                        </button>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    )}
                 </div>
 
-                {/* Quick Access Cards with 3D Effect */}
+                {/* Quick Access Cards */}
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-5 mt-16 w-full max-w-5xl">
                     {[
-                        { icon: Music, label: "Music Library", count: "156 tracks", color: "#dc2626", gradient: "from-red-500 to-red-700" },
-                        { icon: Video, label: "Video Library", count: "42 videos", color: "#a855f7", gradient: "from-purple-500 to-purple-700" },
+                        { icon: Music, label: "Music Library", count: `${uploads.filter(u => u.fileType === 'audio').length} tracks`, color: "#dc2626", gradient: "from-red-500 to-red-700" },
+                        { icon: Video, label: "Video Library", count: `${uploads.filter(u => u.fileType === 'video').length} videos`, color: "#a855f7", gradient: "from-purple-500 to-purple-700" },
                         { icon: FileAudio, label: "Playlists", count: "8 playlists", color: "#00d4ff", gradient: "from-cyan-400 to-cyan-600" },
-                        { icon: FileVideo, label: "Recently Played", count: "24 items", color: "#f59e0b", gradient: "from-amber-500 to-amber-700" },
+                        { icon: LinkIcon, label: "Links", count: `${uploads.filter(u => u.type === 'url').length} links`, color: "#f59e0b", gradient: "from-amber-500 to-amber-700" },
                     ].map((item, i) => (
                         <button
                             key={i}
@@ -271,7 +343,6 @@ export default function UserUpload() {
                                 e.currentTarget.style.boxShadow = "0 4px 16px rgba(0,0,0,0.2)";
                             }}
                         >
-                            {/* Gradient Overlay */}
                             <div className={`absolute inset-0 bg-linear-to-br ${item.gradient} opacity-0 group-hover:opacity-5 transition-opacity duration-500`} />
 
                             <div className="relative">
@@ -290,7 +361,7 @@ export default function UserUpload() {
                 </div>
             </div>
 
-            {/* Footer with Glow Effect */}
+            {/* Footer */}
             <div className="relative py-8 text-center border-t" style={{ borderColor: "rgba(255,255,255,0.05)" }}>
                 <div className="absolute top-0 left-1/2 transform -translate-x-1/2 w-64 h-px bg-linear-to-r from-transparent via-red-500 to-transparent opacity-50" />
                 <p className="text-sm text-gray-600">

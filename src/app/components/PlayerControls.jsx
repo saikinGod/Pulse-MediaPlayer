@@ -68,7 +68,7 @@ export default function PlayerControls({
     };
   }, []);
 
-  // 🔑 Keyboard controls (logic only)
+  // Keyboard controls (logic only)
   useEffect(() => {
     const handleKeyDown = (e) => {
       if (["INPUT", "TEXTAREA"].includes(e.target.tagName)) return;
@@ -292,7 +292,6 @@ export default function PlayerControls({
                 <button
                   className="w-full px-3 py-2 text-left text-sm text-gray-300 hover:bg-[#2a2a2a] hover:text-white"
                   onClick={() => {
-                    /* playbackRate = 2 */
                     setShowMoreMenu(false);
                   }}
                 >
