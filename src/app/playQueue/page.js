@@ -13,7 +13,6 @@ export default function PlayQueue() {
     const [playingIndex, setPlayingIndex] = useState(null);
     const [selectedIndices, setSelectedIndices] = useState([]);
 
-    // Load Queue
     const fetchQueue = () => {
         const savedQueue = JSON.parse(localStorage.getItem("pulseQueue") || "[]");
         setQueue(savedQueue);
@@ -26,7 +25,6 @@ export default function PlayQueue() {
         return () => window.removeEventListener("storage", fetchQueue);
     }, []);
 
-    // Selection Logic
     const toggleSelection = (index) => {
         if (selectedIndices.includes(index)) {
             setSelectedIndices(prev => prev.filter(i => i !== index));
@@ -43,7 +41,6 @@ export default function PlayQueue() {
         }
     };
 
-    // Actions
     const removeSelected = () => {
         Swal.fire({
             title: `Remove ${selectedIndices.length} items?`,
@@ -97,10 +94,8 @@ export default function PlayQueue() {
     return (
         <div className="min-h-screen bg-[#0a0a0f] text-gray-200 font-sans p-8 pb-32">
 
-            {/* HEADER AREA*/}
             <div className="mb-8 border-b border-white/5 pb-6">
 
-                {/* Title */}
                 <div className="flex items-center gap-4 mb-6">
                     <div className="w-14 h-14 rounded-xl bg-linear-to-br from-red-600 to-pink-700 flex items-center justify-center shadow-lg shadow-red-900/20">
                         <ListMusic size={28} className="text-white" />
@@ -119,7 +114,6 @@ export default function PlayQueue() {
                     </div>
                 </div>
 
-                {/* DYNAMIC TOOLBAR */}
                 {queue.length > 0 && (
                     <div className={`flex items-center justify-between p-2 rounded-xl border transition-all duration-300 ${selectedIndices.length > 0 ? 'bg-[#18181b] border-red-500/20 shadow-lg shadow-red-900/10' : 'bg-transparent border-transparent'}`}>
 
@@ -135,7 +129,6 @@ export default function PlayQueue() {
                             )}
                         </div>
 
-                        {/* Right: Actions */}
                         <div className="flex items-center gap-2">
                             {selectedIndices.length > 0 ? (
                                 <div className="flex items-center gap-2 animate-in slide-in-from-right-2 duration-200">
@@ -147,7 +140,6 @@ export default function PlayQueue() {
                                     </button>
                                 </div>
                             ) : (
-                                // DEFAULT MODE
                                 <div className="flex items-center gap-2">
                                     <button onClick={() => router.push("/musicLibrary")} className="flex items-center gap-2 px-4 py-2 bg-[#27272a] hover:bg-[#3f3f46] text-white rounded-lg font-medium transition-colors text-sm">
                                         <Music size={16} /> Add Music
@@ -165,7 +157,6 @@ export default function PlayQueue() {
                 )}
             </div>
 
-            {/* LIST SECTION */}
             <div className="flex flex-col gap-1 select-none">
                 {queue.length > 0 ? (
                     queue.map((track, index) => {
@@ -184,17 +175,14 @@ export default function PlayQueue() {
                                             : "bg-transparent hover:bg-[#18181b] border-transparent hover:border-white/5"
                                     }`}
                             >
-                                {/* CHECKBOX AREA (On Hover) */}
                                 <div
                                     className="w-12 flex justify-center items-center relative z-10"
                                     onClick={(e) => { e.stopPropagation(); toggleSelection(index); }}
                                 >
-                                    {/* Selected -> Always show Checkbox */}
                                     {isSelected ? (
                                         <CheckSquare size={18} className="text-red-500" />
                                     ) : (
                                         <>
-                                            {/* Not Selected -> Show Number/Play Animation */}
                                             <div className="group-hover:hidden flex items-center justify-center">
                                                 {isPlaying ? (
                                                     <div className="flex gap-0.5 justify-center items-end h-3">
@@ -207,7 +195,6 @@ export default function PlayQueue() {
                                                 )}
                                             </div>
 
-                                            {/* Hover -> Show Empty Checkbox */}
                                             <Square
                                                 size={18}
                                                 className="text-gray-600 hidden group-hover:block hover:text-white transition-colors"
@@ -216,12 +203,10 @@ export default function PlayQueue() {
                                     )}
                                 </div>
 
-                                {/* Type Icon */}
                                 <div className="mr-4 text-gray-500">
                                     {track.fileType === 'video' ? <Video size={16} /> : <Music size={16} />}
                                 </div>
 
-                                {/* Info */}
                                 <div className="flex-1 min-w-0 flex items-center gap-4">
                                     <h3 className={`font-medium truncate text-sm ${isPlaying || isSelected ? "text-white" : "text-gray-300"}`}>
                                         {track.name}
@@ -231,7 +216,6 @@ export default function PlayQueue() {
                                     </span>
                                 </div>
 
-                                {/* Duration */}
                                 <div className="text-xs text-gray-500 font-mono w-16 text-right pr-4">
                                     {track.duration || "0:00"}
                                 </div>
@@ -240,7 +224,6 @@ export default function PlayQueue() {
                         );
                     })
                 ) : (
-                    /* EMPTY STATE */
                     <div className="flex flex-col items-center justify-center py-32 text-center border-2 border-dashed border-gray-800 rounded-2xl bg-[#121214]/50">
                         <div className="relative mb-6">
                             <div className="absolute inset-0 bg-red-500 blur-2xl opacity-10 rounded-full"></div>

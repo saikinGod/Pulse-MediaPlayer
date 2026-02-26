@@ -1,6 +1,5 @@
 "use client";
 
-// Gradient & Glow Filters
 const GradientAndGlow = () => (
   <defs>
     <linearGradient id="pulse-red-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
@@ -17,7 +16,6 @@ const GradientAndGlow = () => (
   </defs>
 );
 
-// Wrapper for Hover Effects
 const IconWrapper = ({ children, size = 24, onClick, className = "" }) => (
   <svg
     width={size}
@@ -34,7 +32,6 @@ const IconWrapper = ({ children, size = 24, onClick, className = "" }) => (
   </svg>
 );
 
-// Icons Components
 export const ShuffleIcon = (props) => (
   <IconWrapper {...props}>
     <path d="M21 16V21H16" stroke="url(#pulse-red-gradient)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
@@ -71,7 +68,6 @@ export const RepeatIcon = (props) => (
 
 export const PlayPauseButton = ({ isPlaying, onClick, size = 50 }) => (
   <button onClick={onClick} className="relative group focus:outline-none mx-4">
-    {/* Glow Backdrop */}
     <div className="absolute inset-0 bg-red-600 rounded-full blur-md opacity-40 group-hover:opacity-60 transition-opacity"></div>
 
     <svg width={size} height={size} viewBox="0 0 48 48" fill="none" className="relative z-10 transition-transform duration-200 group-hover:scale-105 group-active:scale-95">

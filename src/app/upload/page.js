@@ -7,7 +7,6 @@ export default function UserUpload() {
     const [urlInput, setUrlInput] = useState("");
     const [uploads, setUploads] = useState([]);
 
-    // Load data from Local Storage on component mount
     useEffect(() => {
         const savedData = localStorage.getItem("pulse_media_uploads");
         if (savedData) {
@@ -15,7 +14,6 @@ export default function UserUpload() {
         }
     }, []);
 
-    // Save to Local Storage
     const saveToLocalStorage = (newItems) => {
         const updatedList = [...newItems, ...uploads];
         const slicedList = updatedList.slice(0, 20);
@@ -23,7 +21,6 @@ export default function UserUpload() {
         localStorage.setItem("pulse_media_uploads", JSON.stringify(slicedList));
     };
 
-    // Helper to format file size
     const formatSize = (bytes) => {
         if (bytes === 0) return '0 Bytes';
         const k = 1024;
@@ -89,7 +86,6 @@ export default function UserUpload() {
         }
     };
 
-    // Delete item from Local Storage
     const deleteItem = (id) => {
         const filtered = uploads.filter(item => item.id !== id);
         setUploads(filtered);
@@ -99,7 +95,6 @@ export default function UserUpload() {
     return (
         <div className="relative min-h-screen flex flex-col" style={{ background: "#0a0a0f" }}>
 
-            {/* Animated Background Grid */}
             <div className="absolute inset-0 pointer-events-none">
                 <div className="absolute inset-0" style={{
                     backgroundImage: `
@@ -111,7 +106,6 @@ export default function UserUpload() {
                 }} />
             </div>
 
-            {/* Gradient Orbs */}
             <div className="absolute inset-0 pointer-events-none">
                 <div className="absolute top-1/4 left-1/4 w-96 h-96 rounded-full blur-3xl opacity-20 animate-pulse"
                     style={{
@@ -126,10 +120,8 @@ export default function UserUpload() {
                     }} />
             </div>
 
-            {/* Hero Section */}
             <div className="relative flex-1 flex flex-col items-center justify-center px-6 py-12">
 
-                {/* Welcome Badge */}
                 <div className="mb-8 px-5 py-2.5 rounded-full border flex items-center gap-2.5 relative group"
                     style={{
                         borderColor: "rgba(233,69,96,0.4)",
@@ -157,7 +149,6 @@ export default function UserUpload() {
                     <span className="text-red-400 font-medium">Experience the pulse of modern entertainment.</span>
                 </p>
 
-                {/* Upload Section */}
                 <div className="w-full max-w-5xl rounded-3xl p-8 md:p-12 relative"
                     style={{
                         background: "rgba(18,18,26,0.7)",
@@ -181,7 +172,6 @@ export default function UserUpload() {
                         </h2>
                     </div>
 
-                    {/* Drag & Drop Zone */}
                     <div
                         onDragEnter={handleDrag}
                         onDragLeave={handleDrag}
@@ -240,7 +230,6 @@ export default function UserUpload() {
                         </p>
                     </div>
 
-                    {/* URL Input */}
                     <div className="flex flex-col md:flex-row gap-4">
                         <div className="flex-1 relative group">
                             <div className="absolute -inset-0.5 bg-linear-to-r from-red-500 to-purple-500 rounded-xl opacity-0 group-hover:opacity-20 blur transition duration-500" />
@@ -284,7 +273,6 @@ export default function UserUpload() {
                         </button>
                     </div>
 
-                    {/* Recent Activity List (Local Storage) */}
                     {uploads.length > 0 && (
                         <div className="mt-12 animate-in fade-in slide-in-from-bottom-4 duration-500">
                             <div className="flex items-center gap-2 mb-4">
@@ -317,7 +305,6 @@ export default function UserUpload() {
                     )}
                 </div>
 
-                {/* Quick Access Cards */}
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-5 mt-16 w-full max-w-5xl">
                     {[
                         { icon: Music, label: "Music Library", count: `${uploads.filter(u => u.fileType === 'audio').length} tracks`, color: "#dc2626", gradient: "from-red-500 to-red-700" },
@@ -361,7 +348,6 @@ export default function UserUpload() {
                 </div>
             </div>
 
-            {/* Footer */}
             <div className="relative py-8 text-center border-t" style={{ borderColor: "rgba(255,255,255,0.05)" }}>
                 <div className="absolute top-0 left-1/2 transform -translate-x-1/2 w-64 h-px bg-linear-to-r from-transparent via-red-500 to-transparent opacity-50" />
                 <p className="text-sm text-gray-600">
@@ -371,7 +357,6 @@ export default function UserUpload() {
                 </p>
             </div>
 
-            {/* CSS Animations */}
             <style jsx>{`
                 @keyframes float {
                     0%, 100% { transform: translate(0, 0) scale(1); }

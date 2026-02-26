@@ -1,75 +1,120 @@
 "use client";
 import { useState, useEffect } from "react";
-import { X, Music, Plus } from "lucide-react";
+import { X, Plus, Music, ListMusic } from "lucide-react";
+import Swal from "sweetalert2";
 
-export default function AddToPlaylistModal({ isOpen, onClose, trackId }) {
+export default function AddToPlaylistModal({ isOpen, onClose, track }) {
     const [playlists, setPlaylists] = useState([]);
+    const [newPlaylistName, setNewPlaylistName] = useState("");
+    const [showCreateInput, setShowCreateInput] = useState(false);
 
-    // Load Playlists when modal opens
     useEffect(() => {
         if (isOpen) {
-            const saved = JSON.parse(localStorage.getItem("userCustomPlaylists") || "[]");
-            setPlaylists(saved);
+            const savedPlaylists = JSON.parse(localStorage.getItem("userCustomPlaylists") || "[]");
+            setPlaylists(savedPlaylists);
+            setShowCreateInput(false);
+            setNewPlaylistName("");
         }
     }, [isOpen]);
 
+    if (!isOpen || !track) return null;
+
     const handleAddToPlaylist = (playlistId) => {
-        const saved = JSON.parse(localStorage.getItem("userCustomPlaylists") || "[]");
-        const playlistIndex = saved.findIndex(p => p.id === playlistId);
+        let updatedPlaylists = [...playlists];
+        const index = updatedPlaylists.findIndex(p => p.id === playlistId);
 
-        if (playlistIndex > -1) {
-            // Check if song already exists
-            if (saved[playlistIndex].songs.includes(trackId)) {
-                alert("Song is already in this playlist!"); // Simple alert
-                return;
+        if (index !== -1) {
+            if (!updatedPlaylists[index].songs.includes(track.id)) {
+                updatedPlaylists[index].songs.push(track.id);
+                localStorage.setItem("userCustomPlaylists", JSON.stringify(updatedPlaylists));
+                window.dispatchEvent(new Event("storage"));
+
+                Swal.fire({ toast: true, position: 'bottom-end', showConfirmButton: false, timer: 2000, background: '#18181b', color: '#fff', icon: 'success', title: 'Added to Playlist' });
+            } else {
+                Swal.fire({ toast: true, position: 'bottom-end', showConfirmButton: false, timer: 2000, background: '#18181b', color: '#fff', icon: 'info', title: 'Already in Playlist' });
             }
-
-            // Add song ID
-            saved[playlistIndex].songs.push(trackId);
-            localStorage.setItem("userCustomPlaylists", JSON.stringify(saved));
-
-            // Notify & Close
-            window.dispatchEvent(new Event("storage")); // Refresh UI
-            onClose();
         }
+        onClose();
     };
 
-    if (!isOpen) return null;
+    const handleCreatePlaylist = () => {
+        if (!newPlaylistName.trim()) return;
+
+        const newPlaylist = {
+            id: "playlist-" + Date.now(),
+            name: newPlaylistName.trim(),
+            createdAt: new Date().toLocaleDateString(),
+            songs: [track.id]
+        };
+
+        const updatedPlaylists = [newPlaylist, ...playlists];
+        localStorage.setItem("userCustomPlaylists", JSON.stringify(updatedPlaylists));
+        window.dispatchEvent(new Event("storage"));
+
+        Swal.fire({ toast: true, position: 'bottom-end', showConfirmButton: false, timer: 2000, background: '#18181b', color: '#fff', icon: 'success', title: 'Playlist Created & Added' });
+        onClose();
+    };
 
     return (
-        <div className="fixed inset-0 z-100 flex items-center justify-center bg-black/80 backdrop-blur-sm animate-in fade-in duration-200">
-            <div className="w-full max-w-sm bg-[#18181b] border border-white/10 rounded-2xl p-6 shadow-2xl scale-100 animate-in zoom-in-95 duration-200">
-
-                <div className="flex items-center justify-between mb-4">
-                    <h2 className="text-lg font-bold text-white">Add to Playlist</h2>
-                    <button onClick={onClose} className="text-gray-400 hover:text-white"><X size={20} /></button>
+        <div className="fixed inset-0 z-10000 flex items-center justify-center bg-black/80 backdrop-blur-md" onClick={onClose}>
+            <div className="bg-[#0a0a0f] border border-red-500/20 w-full max-w-md rounded-2xl p-6 shadow-[0_0_50px_rgba(220,38,38,0.15)]" onClick={(e) => e.stopPropagation()}>
+                <div className="flex justify-between items-center mb-6">
+                    <h2 className="text-xl font-bold text-white">Add to Playlist</h2>
+                    <button onClick={onClose} className="text-gray-400 hover:text-red-500 transition-colors">
+                        <X size={24} />
+                    </button>
                 </div>
 
-                <div className="flex flex-col gap-2 max-h-75 overflow-y-auto pr-2">
-                    {playlists.length > 0 ? (
-                        playlists.map((p) => (
-                            <button
-                                key={p.id}
-                                onClick={() => handleAddToPlaylist(p.id)}
-                                className="flex items-center gap-3 p-3 rounded-xl bg-[#27272a] hover:bg-[#3f3f46] transition-colors text-left group"
-                            >
-                                <div className="w-10 h-10 rounded-lg bg-black/40 flex items-center justify-center text-gray-400 group-hover:text-red-500 transition-colors">
-                                    <Music size={18} />
-                                </div>
-                                <div className="flex-1">
-                                    <h3 className="text-white font-medium text-sm">{p.name}</h3>
-                                    <p className="text-xs text-gray-500">{p.songs.length} songs</p>
-                                </div>
-                                <Plus size={16} className="text-gray-500 group-hover:text-white" />
-                            </button>
-                        ))
-                    ) : (
-                        <div className="text-center py-8 text-gray-500 text-sm">
-                            No playlists found.<br />Go to Library to create one.
-                        </div>
+                <div className="flex items-center gap-4 p-3 bg-red-500/10 border border-red-500/20 rounded-xl mb-6">
+                    <div className="w-12 h-12 bg-red-600 rounded-lg flex items-center justify-center shadow-md">
+                        <Music size={20} className="text-white" />
+                    </div>
+                    <div className="overflow-hidden">
+                        <h4 className="text-red-400 font-medium truncate">{track.name}</h4>
+                        <p className="text-gray-400 text-xs truncate">Select a destination</p>
+                    </div>
+                </div>
+
+                <div className="max-h-60 overflow-y-auto pr-2 mb-4 space-y-2 custom-scrollbar">
+                    {playlists.map((playlist) => (
+                        <button
+                            key={playlist.id}
+                            onClick={() => handleAddToPlaylist(playlist.id)}
+                            className="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-white/5 border border-transparent hover:border-white/10 transition-all text-left group"
+                        >
+                            <div className="w-10 h-10 bg-[#18181b] rounded flex items-center justify-center group-hover:bg-red-500/20 transition-colors">
+                                <ListMusic size={18} className="text-gray-500 group-hover:text-red-500" />
+                            </div>
+                            <div>
+                                <span className="text-gray-200 block font-medium group-hover:text-white transition-colors">{playlist.name}</span>
+                                <span className="text-xs text-gray-500 block">{playlist.songs.length} tracks</span>
+                            </div>
+                        </button>
+                    ))}
+                    {playlists.length === 0 && !showCreateInput && (
+                        <p className="text-center text-gray-500 py-4 text-sm">No playlists found.</p>
                     )}
                 </div>
 
+                {!showCreateInput ? (
+                    <button onClick={() => setShowCreateInput(true)} className="w-full flex items-center justify-center gap-2 p-3 rounded-xl bg-linear-to-r from-red-600 to-red-700 hover:from-red-500 hover:to-red-600 text-white font-medium transition-all shadow-lg">
+                        <Plus size={20} /> Create New Playlist
+                    </button>
+                ) : (
+                    <div className="flex gap-2">
+                        <input
+                            type="text"
+                            placeholder="Playlist name..."
+                            value={newPlaylistName}
+                            onChange={(e) => setNewPlaylistName(e.target.value)}
+                            autoFocus
+                            className="flex-1 bg-[#18181b] border border-white/10 rounded-xl px-4 py-3 text-white outline-none focus:border-red-500 transition-colors"
+                        />
+                        <button onClick={handleCreatePlaylist} className="bg-red-600 hover:bg-red-500 text-white px-5 rounded-xl font-medium transition-colors shadow-lg">
+                            Save
+                        </button>
+                    </div>
+                )}
             </div>
         </div>
     );

@@ -1,7 +1,7 @@
 "use client";
 import { useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
-import { motion } from "framer-motion"; // Import Framer Motion
+import { motion } from "framer-motion";
 import {
   Home,
   Music,
@@ -41,10 +41,8 @@ export default function SideBar() {
         ${isExpanded ? "w-72" : "w-20"}
       `}
     >
-      {/* Top Section */}
       <div className="p-5 flex flex-col gap-6">
         <div className={`flex items-center ${isExpanded ? "justify-between" : "justify-center"}`}>
-          {/* Logo */}
           <div className={`flex items-center gap-3 transition-opacity duration-200 ${isExpanded ? "opacity-100 flex" : "opacity-0 hidden w-0"}`}>
             <div className="relative w-8 h-8 rounded-full overflow-hidden shadow-[0_0_10px_rgba(220,38,38,0.5)]">
               <img src="/favicon.ico" alt="Pulse" className="w-8 h-8 object-cover" />
@@ -52,13 +50,11 @@ export default function SideBar() {
             <span className="font-bold text-white tracking-wide">Pulse</span>
           </div>
 
-          {/* Toggle Button */}
           <button onClick={() => setIsExpanded(!isExpanded)} className="text-gray-400 hover:text-white transition-colors p-1">
             {isExpanded ? <ChevronLeft size={24} /> : <Menu size={24} />}
           </button>
         </div>
 
-        {/* Search */}
         <div className="relative group">
           {isExpanded ? (
             <div className="relative">
@@ -75,7 +71,6 @@ export default function SideBar() {
         </div>
       </div>
 
-      {/* Navigation */}
       <nav className="flex-1 px-3 space-y-2 mt-2">
         {menuItems.map((item) => {
           const isActive = pathname === item.url;
@@ -89,7 +84,6 @@ export default function SideBar() {
                   ${isExpanded ? "justify-start gap-4" : "justify-center"}
                 `}
               >
-                {/* Framer Motion */}
                 {isActive && (
                   <motion.div
                     layoutId="active-pill"
@@ -102,7 +96,6 @@ export default function SideBar() {
                   />
                 )}
 
-                {/* The Red Vertical Bar */}
                 {isActive && (
                   <motion.div
                     layoutId="active-border"
@@ -124,7 +117,6 @@ export default function SideBar() {
                 </span>
               </button>
 
-              {/* Tooltip */}
               {!isExpanded && (
                 <div className="absolute left-full ml-4 px-2 py-1 bg-[#252525] text-white text-xs rounded border border-gray-700 opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-50 shadow-xl">
                   {item.name}
@@ -136,7 +128,6 @@ export default function SideBar() {
         })}
       </nav>
 
-      {/* Footer */}
       <div className="p-3 border-t mb-9.25 border-[#2a2a2a]">
         <div className="relative group flex items-center">
           <button

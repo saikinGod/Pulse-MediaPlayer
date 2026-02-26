@@ -1,6 +1,5 @@
 "use client";
 import { useState, useEffect } from "react";
-// useRouter imported
 import { useRouter } from "next/navigation";
 import { Link as LinkIcon, Trash2, Plus, Music, ListMusic, FolderPlus, Play, Heart } from "lucide-react";
 import Link from "next/link";
@@ -8,14 +7,12 @@ import CreatePlaylistModal from "../components/CreatePlaylistModal";
 import Swal from 'sweetalert2';
 
 export default function Playlists() {
-    // Router initialized
     const router = useRouter();
 
     const [links, setLinks] = useState([]);
     const [customPlaylists, setCustomPlaylists] = useState([]);
     const [isModalOpen, setIsModalOpen] = useState(false);
 
-    // Fetch Data
     const fetchData = () => {
         const savedUploads = localStorage.getItem("pulse_media_uploads");
         if (savedUploads) {
@@ -143,7 +140,7 @@ export default function Playlists() {
                 </div>
             </div>
 
-            {/* Links section */}
+
             <div className="relative z-10">
                 <div className="flex items-center justify-between mb-6">
                     <h2 className="text-2xl font-bold text-white flex items-center gap-2"><LinkIcon className="text-red-500" size={24} /> Saved Links</h2>

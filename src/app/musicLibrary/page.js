@@ -1,31 +1,28 @@
 "use client";
 import { useState, useEffect } from "react";
-import { Music, Search, Trash2, Heart, ListPlus, ListMusic } from "lucide-react";
+import { Music, Search, Trash2, Play, ListMusic, Heart, PlusCircle } from "lucide-react";
 import UploadButton from "../components/UploadButton";
 import Swal from 'sweetalert2';
+import { usePlayer } from "../context/PlayerContext";
 import AddToPlaylistModal from "../components/AddToPlaylistModal";
 
 export default function MusicLibrary() {
     const [searchQuery, setSearchQuery] = useState("");
-    const [tracks, setTracks] = useState([]);
+    const [musics, setMusics] = useState([]);
     const [favorites, setFavorites] = useState([]);
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [selectedTrack, setSelectedTrack] = useState(null);
 
-    // Modal State
-    const [isPlaylistModalOpen, setIsPlaylistModalOpen] = useState(false);
-    const [selectedTrackId, setSelectedTrackId] = useState(null);
+    const { playTrack, currentTrack, isPlaying } = usePlayer();
 
-    // Helper: Check "Smart" Favourite Names
     const isFavPlaylist = (name) => {
         const magicWords = ["fav", "favs", "favorite", "favorites", "favourite", "favourites"];
         return magicWords.includes(name.toLowerCase().trim());
     };
 
-    // Fetch Data
-    const fetchMusic = () => {
+    const fetchMusics = () => {
         const savedData = localStorage.getItem("userMusics");
-        if (savedData) {
-            setTracks(JSON.parse(savedData));
-        }
+        if (savedData) setMusics(JSON.parse(savedData));
 
         const savedPlaylists = JSON.parse(localStorage.getItem("userCustomPlaylists") || "[]");
         const favPlaylist = savedPlaylists.find(p => isFavPlaylist(p.name));
@@ -38,48 +35,12 @@ export default function MusicLibrary() {
     };
 
     useEffect(() => {
-        fetchMusic();
-        window.addEventListener("storage", fetchMusic);
-        return () => window.removeEventListener("storage", fetchMusic);
+        fetchMusics();
+        window.addEventListener("storage", fetchMusics);
+        return () => window.removeEventListener("storage", fetchMusics);
     }, []);
 
-    // Add to Playlist Modal Handler
-    const openAddToPlaylist = (trackId) => {
-        setSelectedTrackId(trackId);
-        setIsPlaylistModalOpen(true);
-    };
-
-    // Add to Play Queue Logic (Local Storage)
-    const addToQueue = (track) => {
-        const currentQueue = JSON.parse(localStorage.getItem("pulseQueue") || "[]");
-
-        // Duplicate check
-        const exists = currentQueue.some(t => t.id === track.id);
-        if (exists) {
-            const Toast = Swal.mixin({
-                toast: true, position: 'bottom-end', showConfirmButton: false, timer: 2000,
-                background: '#18181b', color: '#fff'
-            });
-            Toast.fire({ icon: 'info', title: 'Already in Queue' });
-            return;
-        }
-
-        currentQueue.push(track);
-        localStorage.setItem("pulseQueue", JSON.stringify(currentQueue));
-
-        // Notify System
-        window.dispatchEvent(new Event("storage"));
-
-        // Success Toast
-        const Toast = Swal.mixin({
-            toast: true, position: 'bottom-end', showConfirmButton: false, timer: 2000,
-            background: '#18181b', color: '#fff'
-        });
-        Toast.fire({ icon: 'success', title: 'Added to Queue' });
-    };
-
-    // Toggle Heart
-    const toggleHeart = (trackId) => {
+    const toggleHeart = (musicId) => {
         let playlists = JSON.parse(localStorage.getItem("userCustomPlaylists") || "[]");
         let favIndex = playlists.findIndex(p => isFavPlaylist(p.name));
 
@@ -88,18 +49,18 @@ export default function MusicLibrary() {
                 id: "fav-auto-" + Date.now(),
                 name: "Favourites",
                 createdAt: new Date().toLocaleDateString(),
-                songs: [trackId]
+                songs: [musicId]
             };
             playlists.unshift(newFav);
-            setFavorites([trackId]);
+            setFavorites([musicId]);
         } else {
             let songList = playlists[favIndex].songs || [];
-            if (songList.includes(trackId)) {
-                songList = songList.filter(id => id !== trackId);
-                setFavorites(prev => prev.filter(id => id !== trackId));
+            if (songList.includes(musicId)) {
+                songList = songList.filter(id => id !== musicId);
+                setFavorites(prev => prev.filter(id => id !== musicId));
             } else {
-                songList.push(trackId);
-                setFavorites(prev => [...prev, trackId]);
+                songList.push(musicId);
+                setFavorites(prev => [...prev, musicId]);
             }
             playlists[favIndex].songs = songList;
         }
@@ -108,69 +69,62 @@ export default function MusicLibrary() {
         window.dispatchEvent(new Event("storage"));
     };
 
-    // Delete Track
+    const addToQueue = (music) => {
+        const currentQueue = JSON.parse(localStorage.getItem("pulseQueue") || "[]");
+        if (currentQueue.some(t => t.id === music.id)) {
+            const Toast = Swal.mixin({ toast: true, position: 'bottom-end', showConfirmButton: false, timer: 2000, background: '#18181b', color: '#fff' });
+            Toast.fire({ icon: 'info', title: 'Already in Queue' });
+            return;
+        }
+        currentQueue.push(music);
+        localStorage.setItem("pulseQueue", JSON.stringify(currentQueue));
+        window.dispatchEvent(new Event("storage"));
+        const Toast = Swal.mixin({ toast: true, position: 'bottom-end', showConfirmButton: false, timer: 2000, background: '#18181b', color: '#fff' });
+        Toast.fire({ icon: 'success', title: 'Added to Queue' });
+    };
+
     const handleDelete = (id) => {
         Swal.fire({
-            title: "Delete Song?",
-            text: "It will be removed from all playlists too.",
-            icon: "warning",
-            showCancelButton: true,
-            confirmButtonColor: "#dc2626",
-            cancelButtonColor: "#4b5563",
-            background: "#18181b",
-            color: "#fff"
+            title: "Delete Track?", text: "Cannot be undone.", icon: "warning", showCancelButton: true,
+            confirmButtonColor: "#dc2626", cancelButtonColor: "#4b5563", background: "#18181b", color: "#fff"
         }).then((result) => {
             if (result.isConfirmed) {
                 const savedData = JSON.parse(localStorage.getItem("userMusics") || "[]");
-                const updatedData = savedData.filter(item => item.id !== id);
-                localStorage.setItem("userMusics", JSON.stringify(updatedData));
-                fetchMusic();
+                localStorage.setItem("userMusics", JSON.stringify(savedData.filter((item) => item.id !== id)));
+
+                const currentQueue = JSON.parse(localStorage.getItem("pulseQueue") || "[]");
+                const newQueue = currentQueue.filter(item => item.id !== id);
+                localStorage.setItem("pulseQueue", JSON.stringify(newQueue));
+
+                fetchMusics();
+                window.dispatchEvent(new Event("storage"));
                 Swal.fire({ title: "Deleted!", icon: "success", background: "#18181b", color: "#fff", confirmButtonColor: "#dc2626" });
             }
         });
     };
 
-    const filteredTracks = tracks.filter(track =>
-        track.name?.toLowerCase().includes(searchQuery.toLowerCase())
+    const openPlaylistModal = (music, e) => {
+        e.stopPropagation();
+        setSelectedTrack(music);
+        setIsModalOpen(true);
+    };
+
+    const filteredMusics = musics.filter((music) =>
+        music.name?.toLowerCase().includes(searchQuery.toLowerCase())
     );
 
     return (
         <div className="flex flex-col h-full min-h-screen relative" style={{ background: "#0a0a0f", color: "#e2e0e8" }}>
-
-            {/* MODAL */}
-            <AddToPlaylistModal
-                isOpen={isPlaylistModalOpen}
-                onClose={() => setIsPlaylistModalOpen(false)}
-                trackId={selectedTrackId}
-            />
-
-            {/* TWITTER HEART CSS */}
             <style jsx global>{`
                 .heart-btn { position: relative; }
-                .heart-btn::before, .heart-btn::after {
-                    content: ""; position: absolute; top: 50%; left: 50%; border-radius: 50%;
-                    width: 100%; height: 100%; transform: translate(-50%, -50%) scale(0); pointer-events: none;
-                }
-                .heart-btn.is-active svg {
-                    fill: #e0245e; stroke: #e0245e;
-                    animation: heart-bounce 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-                }
-                .heart-btn.is-active::before { animation: sparkles-burst 0.6s ease-out; }
-                @keyframes heart-bounce {
-                    0% { transform: scale(1); } 50% { transform: scale(1.3); } 100% { transform: scale(1); }
-                }
-                @keyframes sparkles-burst {
-                    0% { transform: translate(-50%, -50%) scale(0); opacity: 1; box-shadow: 0 -18px 0 -3px #ff2a6d, 14px -10px 0 -3px #05d9e8, 14px 10px 0 -3px #ff2a6d, 0 18px 0 -3px #05d9e8, -14px 10px 0 -3px #ff2a6d, -14px -10px 0 -3px #05d9e8; }
-                    100% { transform: translate(-50%, -50%) scale(1.5); opacity: 0; box-shadow: 0 -30px 0 -3px transparent, 24px -18px 0 -3px transparent, 24px 18px 0 -3px transparent, 0 30px 0 -3px transparent, -24px 18px 0 -3px transparent, -24px -18px 0 -3px transparent; }
-                }
+                .heart-btn.is-active svg { fill: #e0245e; stroke: #e0245e; animation: heart-bounce 0.4s; }
+                @keyframes heart-bounce { 0% { transform: scale(1); } 50% { transform: scale(1.3); } 100% { transform: scale(1); } }
             `}</style>
 
-            {/* Top Bar */}
             <div className="flex justify-end p-6">
                 <UploadButton type={"music"} />
             </div>
 
-            {/* Header */}
             <div className="shrink-0 px-8 pb-6">
                 <div className="flex items-center gap-6 mb-8">
                     <div className="w-20 h-20 rounded-2xl flex items-center justify-center shadow-lg shadow-red-900/20"
@@ -180,12 +134,11 @@ export default function MusicLibrary() {
                     <div>
                         <h1 className="text-4xl font-bold text-white mb-2">Music Library</h1>
                         <p className="text-gray-400 text-sm font-medium">
-                            {tracks.length} {tracks.length === 1 ? 'track' : 'tracks'} available
+                            {musics.length} {musics.length === 1 ? 'track' : 'tracks'} available
                         </p>
                     </div>
                 </div>
 
-                {/* Search */}
                 <div className="flex gap-4">
                     <div className="relative flex-1 group">
                         <Search size={20} className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-500 group-focus-within:text-red-500 transition-colors" />
@@ -201,90 +154,84 @@ export default function MusicLibrary() {
                 </div>
             </div>
 
-            {/* Content */}
             <div className="flex-1 px-8 pb-8 overflow-y-auto">
-                {filteredTracks.length > 0 ? (
-                    <div className="grid gap-3">
-                        {filteredTracks.map((track) => {
-                            const isLiked = favorites.includes(track.id);
+                {filteredMusics.length > 0 ? (
+                    <div className="flex flex-col gap-1">
+                        {filteredMusics.map((music, index) => {
+                            const isLiked = favorites.includes(music.id);
+                            const isThisPlaying = currentTrack?.id === music.id;
 
                             return (
                                 <div
-                                    key={track.id}
-                                    className="group flex items-center justify-between p-4 rounded-xl transition-all duration-300 hover:scale-[1.005] hover:bg-[#1f1f25]"
-                                    style={{ background: "rgba(30,41,59,0.2)", border: "1px solid rgba(255,255,255,0.03)" }}
+                                    key={music.id}
+                                    onClick={() => playTrack(music, filteredMusics)}
+                                    className={`group relative flex items-center p-3 rounded-xl transition-all cursor-pointer border 
+                                        ${isThisPlaying ? 'bg-red-500/10 border-red-500/20' : 'hover:bg-white/5 border-transparent hover:border-white/10'}`}
                                 >
-                                    <div className="flex items-center gap-5 overflow-hidden">
-                                        <div className="w-12 h-12 rounded-full flex items-center justify-center shrink-0 transition-colors group-hover:bg-red-600/20 bg-[#2a2a35] text-gray-400 group-hover:text-red-500">
-                                            <Music size={20} />
-                                        </div>
-                                        <div className="flex flex-col overflow-hidden">
-                                            <h3 className="text-base font-semibold text-gray-100 truncate mb-0.5">{track.name}</h3>
-                                            <div className="flex items-center gap-3 text-xs text-gray-500">
-                                                <span>{track.duration || "0:00"}</span>
-                                                <span className="w-1 h-1 rounded-full bg-gray-600"></span>
-                                                <span>{track.size}</span>
-                                                <span className="w-1 h-1 rounded-full bg-gray-600"></span>
-                                                <span>{track.date}</span>
+                                    <div className="w-10 text-center text-gray-500 text-sm font-mono shrink-0 relative flex justify-center items-center">
+                                        {isThisPlaying && isPlaying ? (
+                                            <div className="flex gap-0.5 items-end h-3">
+                                                <span className="w-0.5 bg-red-500 animate-bounce h-2"></span>
+                                                <span className="w-0.5 bg-red-500 animate-[bounce_1.2s_infinite] h-3"></span>
+                                                <span className="w-0.5 bg-red-500 animate-[bounce_0.8s_infinite] h-1.5"></span>
                                             </div>
+                                        ) : (
+                                            <>
+                                                <span className={`${isThisPlaying ? 'hidden' : 'group-hover:hidden'}`}>{index + 1}</span>
+                                                <Play size={14} className={`hidden ${isThisPlaying ? 'block text-red-500' : 'group-hover:block text-white'} mx-auto`} fill="currentColor" />
+                                            </>
+                                        )}
+                                    </div>
+
+                                    <div className="flex-1 flex items-center gap-4 min-w-0 pr-4">
+                                        <div className="w-10 h-10 rounded bg-[#27272a] flex items-center justify-center shrink-0 text-gray-500 border border-white/5 shadow-inner">
+                                            <Music size={18} className={isThisPlaying ? 'text-red-500' : ''} />
+                                        </div>
+                                        <div className="min-w-0">
+                                            <h3 className={`font-medium text-sm truncate transition-colors ${isThisPlaying ? 'text-red-400' : 'text-gray-200 group-hover:text-white'}`}>
+                                                {music.name}
+                                            </h3>
+                                            <p className="text-xs text-gray-500 truncate mt-0.5">Unknown Artist</p>
                                         </div>
                                     </div>
 
-                                    <div className="flex items-center gap-2">
-
-                                        {/* HEART BUTTON (Favourites) */}
-                                        <button
-                                            onClick={() => toggleHeart(track.id)}
-                                            className={`
-                                                heart-btn p-2.5 rounded-full transition-colors
-                                                ${isLiked ? 'is-active' : 'text-gray-400 hover:text-white hover:bg-white/5'}
-                                            `}
-                                            title={isLiked ? "Unlike" : "Like"}
-                                        >
-                                            <Heart size={22} className="transition-all duration-300" />
+                                    <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                        <button onClick={(e) => { e.stopPropagation(); toggleHeart(music.id); }} className={`heart-btn p-2 rounded-lg hover:bg-white/10 transition-colors ${isLiked ? 'is-active text-pink-500' : 'text-gray-400 hover:text-white'}`} title={isLiked ? "Unlike" : "Like"}>
+                                            <Heart size={18} className="transition-all" />
                                         </button>
-
-                                        {/* ADD TO PLAYLIST BUTTON */}
-                                        <button
-                                            onClick={() => openAddToPlaylist(track.id)}
-                                            className="p-2.5 text-gray-400 hover:text-blue-400 hover:bg-blue-400/10 rounded-full transition-colors opacity-0 group-hover:opacity-100"
-                                            title="Add to Custom Playlist"
-                                        >
-                                            <ListPlus size={22} />
+                                        <button onClick={(e) => openPlaylistModal(music, e)} className="text-gray-400 hover:text-indigo-400 transition-colors p-2 hover:bg-indigo-400/10 rounded-lg" title="Add to Playlist">
+                                            <PlusCircle size={18} />
                                         </button>
-
-                                        {/* ADD TO QUEUE BUTTON */}
-                                        <button
-                                            onClick={() => addToQueue(track)}
-                                            className="p-2.5 text-gray-400 hover:text-green-400 hover:bg-green-400/10 rounded-full transition-colors opacity-0 group-hover:opacity-100"
-                                            title="Add to Play Queue"
-                                        >
-                                            <ListMusic size={22} />
+                                        <button onClick={(e) => { e.stopPropagation(); addToQueue(music); }} className="text-gray-400 hover:text-green-400 transition-colors p-2 hover:bg-green-400/10 rounded-lg" title="Add to Queue">
+                                            <ListMusic size={18} />
                                         </button>
-
-                                        {/* DELETE BUTTON */}
-                                        <button
-                                            onClick={() => handleDelete(track.id)}
-                                            className="p-2.5 text-gray-400 hover:text-red-500 hover:bg-red-500/10 rounded-full transition-colors opacity-0 group-hover:opacity-100"
-                                            title="Delete track"
-                                        >
-                                            <Trash2 size={20} />
+                                        <button onClick={(e) => { e.stopPropagation(); handleDelete(music.id); }} className="text-gray-400 hover:text-red-500 transition-colors p-2 hover:bg-red-500/10 rounded-lg" title="Delete">
+                                            <Trash2 size={18} />
                                         </button>
                                     </div>
+                                    <div className="w-16 text-right text-xs text-gray-500 font-mono pl-4">{music.duration || "0:00"}</div>
                                 </div>
                             );
                         })}
                     </div>
                 ) : (
-                    <div className="h-full flex flex-col items-center justify-center text-center opacity-60 mt-10">
+                    <div className="h-full flex flex-col items-center justify-center text-center opacity-60">
                         <div className="w-24 h-24 rounded-full flex items-center justify-center mb-6 bg-gray-800/50">
                             <Music size={40} className="text-gray-600" />
                         </div>
-                        <h2 className="text-xl font-semibold text-white mb-2">No music found</h2>
-                        <p className="text-gray-500">Upload songs to start your journey.</p>
+                        <h2 className="text-xl font-semibold text-white mb-2">{searchQuery ? "No matches found" : "Your Library is Empty"}</h2>
+                        <p className="text-gray-500 max-w-xs mx-auto">Upload some audio files to get started with Pulse.</p>
                     </div>
                 )}
             </div>
+
+            {isModalOpen && (
+                <AddToPlaylistModal
+                    isOpen={isModalOpen}
+                    onClose={() => setIsModalOpen(false)}
+                    track={selectedTrack}
+                />
+            )}
         </div>
     );
 }

@@ -1,7 +1,6 @@
 "use client";
 import { useState } from "react";
-import PlayerControls from "./components/PlayerControls";
-import UploadButton from "./components/UploadButton";
+
 
 export default function Home() {
   const [isPlaying, setIsPlaying] = useState(false);
@@ -58,13 +57,6 @@ export default function Home() {
         </div>
       </div>
 
-      {/* Player Wrapper */}
-      <div onDoubleClick={(e) => e.stopPropagation()}>
-        <PlayerControls
-          isPlaying={isPlaying}
-          setIsPlaying={setIsPlaying}
-        />
-      </div>
     </div>
   );
 }
